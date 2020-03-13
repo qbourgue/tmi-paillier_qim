@@ -5,14 +5,6 @@
 
 #define SECURITY_BITS 512
 
-void rsaEncrypt(mpz_t N, mpz_t e, mpz_t m, mpz_t c){
-	mpz_powm(c, m, e, N);
-}
-
-void rsaDecrypt(mpz_t N, mpz_t d, mpz_t c, mpz_t m) {
-	mpz_powm(m, c, d, N);
-}
-
 void generatePrime(mpz_t output, unsigned int bits, gmp_randstate_t state) {
 	do {
 		mpz_urandomb(output, state, bits);
@@ -78,29 +70,6 @@ void paillierDecrypt(mpz_t c, mpz_t N, mpz_t m, mpz_t phi){
 	mpz_clears(rInvert, product, Nsquare, r, rminus, minusN, temp, minusOne, NULL);
 }
 
-
-
-int testRSA()
-{
-	gmp_randstate_t state;
-	gmp_randinit_default(state);
-	gmp_randseed_ui(state, time(NULL));
-	mpz_t N, e, d, m, c, p, q;
-	mpz_inits(N, e, d, m, c, p, q, NULL);
-	generatePrime(p, SECURITY_BITS, state);
-	generatePrime(q, SECURITY_BITS, state);
-	generateKeys(p, q, e, d, N, state);
-	gmp_scanf("%Zu", m);
-	gmp_printf("N is %Zu, p is %Zu, q is %Zu\n", N, p, q);
-	rsaEncrypt(N, e, m, c);
-	gmp_printf("Encrypting %Zu gives %Zu\n", m, c);
-	rsaDecrypt(N, d, c, m);
-	gmp_printf("Decrypting %Zu gives %Zu\n", c, m);
-	gmp_randclear(state);
-	mpz_clears(N, e, d, m, c, p, q, NULL);
- 	return 0;
-}
-
 int testPaillier() {
 	gmp_randstate_t state;
 	gmp_randinit_default(state);
@@ -158,7 +127,6 @@ int qim_lsb(mpz_t x, mpz_t m){
 
 
 int main(int argc, char* argv[]) {
-	//testRSA();
 	testPaillier();
 	return 0;
 }
