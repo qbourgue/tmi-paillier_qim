@@ -5,6 +5,18 @@
 
 #define SECURITY_BITS 512
 
+
+/****************************************************************************
+ * Crypto & Watermarking project
+ *
+ *
+ * Quentin Bourgue
+ * Paul-Henri Mignot
+ *
+ * Data Hiding in Homomorphically Encrypted Medical Image
+ *
+*****************************************************************************/
+
 void generatePrime(mpz_t output, unsigned int bits, gmp_randstate_t state) {
 	do {
 		mpz_urandomb(output, state, bits);
