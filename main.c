@@ -188,7 +188,11 @@ int testPaillier() {
  ****************************************************************************/
 
 int main(int argc, char* argv[]) {
-	testPaillier();
+	mpz_t p, N, V ;
+	mpz_inits(p, N, V, NULL);
+
+	mpz_clears(p, N, V, NULL);
+	//testPaillier();
 	return 0;
 }
 
