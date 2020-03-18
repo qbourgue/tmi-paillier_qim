@@ -15,7 +15,7 @@
  *
  * Data Hiding in Homomorphically Encrypted Medical Image
  *
-*****************************************************************************/
+ ****************************************************************************/
 
 /****************************************************************************
  *
@@ -139,6 +139,27 @@ int testPaillier() {
  *
  ****************************************************************************/
 
+void data_generation(mpz_t *data_init, unsigned long int V){
+	gmp_randstate_t state;
+	gmp_randinit_default(state);
+	gmp_randseed_ui(state, time(NULL));
+
+	mpz_t range, random_bit;
+	mpz_inits(random_bit, range, NULL);
+	mpz_set_si(range,2);
+
+	unsigned long int i = 1;
+	do {
+		mpz_urandomm(random_bit, state, range);
+		mpz_set(data_init[i], random_bit);
+		printf("%d\n",i);
+		i++;
+		gmp_printf("random_bit=%Zu\n",random_bit);
+	}
+	while (i<=V);
+
+	mpz_clears(random_bit, range, NULL);
+}
 
 
 /****************************************************************************
@@ -188,14 +209,18 @@ int testPaillier() {
  ****************************************************************************/
 
 int main(int argc, char* argv[]) {
-	mpz_t p, N, V ;
-	mpz_inits(p, N, V, NULL);
+	unsigned int p = 2;
+	unsigned int N = 5;
+	unsigned long int V=p*N;
+	mpz_t data_init[V];
+	unsigned long int i;
+	for (i=0; i<V; i++){
+		mpz_init2(data_init[i], 1024);
+	}
 
-	mpz_clears(p, N, V, NULL);
-	//testPaillier();
+	for (i=0; i<V; i++){
+		mpz_clear(data_init[i]);
+	}
+
 	return 0;
 }
-
-
-
-
