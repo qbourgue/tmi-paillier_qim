@@ -137,6 +137,7 @@ int testPaillier() {
  *
  * Data Generation
  *
+ * (Create an array of V elements, which are random integers of 8 bytes)
  ****************************************************************************/
 
 void data_generation(mpz_t * data, unsigned long int V){
@@ -144,21 +145,20 @@ void data_generation(mpz_t * data, unsigned long int V){
 	gmp_randinit_default(state);
 	gmp_randseed_ui(state, time(NULL));
 
-	mpz_t random_bit;
-	mpz_inits(random_bit, NULL);
+	mpz_t random_bytes;
+	mpz_inits(random_bytes, NULL);
 
 	unsigned long int i = 0;
 	unsigned int bitcnt = 8;
 	do {
-		mpz_urandomb(random_bit, state, bitcnt);
-		mpz_set(data[i], random_bit);
-		printf("%d\n",i);
+		mpz_urandomb(random_bytes, state, bitcnt);
+		mpz_set(data[i], random_bytes);
+		gmp_printf("random_bytes n°%d: %Zu\n", i, random_bytes);
 		i++;
-		gmp_printf("random_bit=%Zu\n",random_bit);
 	}
 	while (i<V);
 
-	mpz_clears(random_bit, NULL);
+	mpz_clears(random_bytes, NULL);
 }
 
 
@@ -166,8 +166,50 @@ void data_generation(mpz_t * data, unsigned long int V){
  *
  * Pre-watermarking 
  *
+ * (Create an array of p elements, which are random bits)
+ *
+ * LSB
  ****************************************************************************/
 
+void watermark_generation(mpz_t * watermark, unsigned int p){
+	gmp_randstate_t state;
+	gmp_randinit_default(state);
+	gmp_randseed_ui(state, time(NULL));
+
+	mpz_t random_bit;
+	mpz_inits(random_bit, NULL);
+
+	unsigned long int j = 0;
+	unsigned int bitcnt = 1;
+	do {
+		mpz_urandomb(random_bit, state, bitcnt);
+		mpz_set(watermark[j], random_bit);
+		gmp_printf("random_bit n°%d: %Zu\n",j, random_bit);
+		j++;
+	}
+	while (j<p);
+
+	mpz_clears(random_bit, NULL);
+}
+
+void pre_watermarking(mpz_t * watermark, mpz_t * data, int N, int p){
+	// embed the watermark
+	mpz_t pixel, LSB, two;
+	mpz_inits(pixel, LSB, two, NULL);
+	mpz_set_ui(two, 2);
+	for (int i_n = 0; i_n<N; i_n++){
+		for (int j_p = 0; j_p<p; j_p++){
+			mpz_set(pixel,data[i_n*p+j_p]);
+			gmp_printf("data[i_n, j_p]=%Zu\n",pixel);
+			// TO DO: get the LSB
+			mpz_congruent_p(pixel,LSB,two);
+			gmp_printf("LSB=%Zu\n",LSB);
+
+			// TO DO: embet the watermark on the LSB
+		}
+	}
+	mpz_clears(pixel, LSB, two, NULL);
+}
 
 
 /****************************************************************************
@@ -220,6 +262,11 @@ int main(int argc, char* argv[]) {
 	data_generation(data, V);
 
 	// Pre-watermarking
+	mpz_t * watermark;
+	watermark = malloc(sizeof(mpz_t) * p);
+	watermark_generation(watermark, p);
+
+	pre_watermarking(watermark, data, N, p);
 	
 	// Encryption
 	
@@ -229,7 +276,10 @@ int main(int argc, char* argv[]) {
 	
 	// Data extraction
 
+	// test main
+	
 	// clear/free
 	free(data);
+	free(watermark);
 	return 0;
 }
