@@ -139,26 +139,26 @@ int testPaillier() {
  *
  ****************************************************************************/
 
-void data_generation(mpz_t *data_init, unsigned long int V){
+void data_generation(mpz_t * data, unsigned long int V){
 	gmp_randstate_t state;
 	gmp_randinit_default(state);
 	gmp_randseed_ui(state, time(NULL));
 
-	mpz_t range, random_bit;
-	mpz_inits(random_bit, range, NULL);
-	mpz_set_si(range,2);
+	mpz_t random_bit;
+	mpz_inits(random_bit, NULL);
 
-	unsigned long int i = 1;
+	unsigned long int i = 0;
+	unsigned int bitcnt = 8;
 	do {
-		mpz_urandomm(random_bit, state, range);
-		mpz_set(data_init[i], random_bit);
+		mpz_urandomb(random_bit, state, bitcnt);
+		mpz_set(data[i], random_bit);
 		printf("%d\n",i);
 		i++;
 		gmp_printf("random_bit=%Zu\n",random_bit);
 	}
-	while (i<=V);
+	while (i<V);
 
-	mpz_clears(random_bit, range, NULL);
+	mpz_clears(random_bit, NULL);
 }
 
 
@@ -209,18 +209,27 @@ void data_generation(mpz_t *data_init, unsigned long int V){
  ****************************************************************************/
 
 int main(int argc, char* argv[]) {
+	// Init parameters
 	unsigned int p = 2;
 	unsigned int N = 5;
 	unsigned long int V=p*N;
-	mpz_t data_init[V];
-	unsigned long int i;
-	for (i=0; i<V; i++){
-		mpz_init2(data_init[i], 1024);
-	}
+	
+	// Data Generation
+	mpz_t * data;
+	data = malloc(sizeof(mpz_t) * V);
+	data_generation(data, V);
 
-	for (i=0; i<V; i++){
-		mpz_clear(data_init[i]);
-	}
+	// Pre-watermarking
+	
+	// Encryption
+	
+	// Message embedding
+	
+	// Mesage extraction
+	
+	// Data extraction
 
+	// clear/free
+	free(data);
 	return 0;
 }
