@@ -152,7 +152,7 @@ void data_generation(mpz_t * data, unsigned long int V){
 	unsigned int bitcnt = 8;
 	do {
 		mpz_urandomb(random_bytes, state, bitcnt);
-		mpz_set(data[i], random_bytes);
+		mpz_init_set(data[i], random_bytes);
 		gmp_printf("random_bytes n°%d: %Zu\n", i, random_bytes);
 		i++;
 	}
@@ -171,7 +171,7 @@ void data_generation(mpz_t * data, unsigned long int V){
  * LSB
  ****************************************************************************/
 
-void watermark_generation(mpz_t * watermark, unsigned int p){
+void watermark_generation(mpz_t *watermark, unsigned int p){
 	gmp_randstate_t state;
 	gmp_randinit_default(state);
 	gmp_randseed_ui(state, time(NULL));
@@ -179,11 +179,11 @@ void watermark_generation(mpz_t * watermark, unsigned int p){
 	mpz_t random_bit;
 	mpz_inits(random_bit, NULL);
 
-	unsigned long int j = 0;
+	unsigned int j = 0;
 	unsigned int bitcnt = 1;
 	do {
 		mpz_urandomb(random_bit, state, bitcnt);
-		mpz_set(watermark[j], random_bit);
+		mpz_init_set(watermark[j], random_bit);
 		gmp_printf("random_bit n°%d: %Zu\n",j, random_bit);
 		j++;
 	}
@@ -194,21 +194,22 @@ void watermark_generation(mpz_t * watermark, unsigned int p){
 
 void pre_watermarking(mpz_t * watermark, mpz_t * data, int N, int p){
 	// embed the watermark
-	mpz_t pixel, LSB, two;
-	mpz_inits(pixel, LSB, two, NULL);
+	mpz_t pixel, two;
+	mpz_inits(pixel, two, NULL);
 	mpz_set_ui(two, 2);
-	for (int i_n = 0; i_n<N; i_n++){
-		for (int j_p = 0; j_p<p; j_p++){
-			mpz_set(pixel,data[i_n*p+j_p]);
-			gmp_printf("data[i_n, j_p]=%Zu\n",pixel);
+	int even;
+	for (int in = 0; in<N; in++){
+		for (int jp = 0; jp<p; jp++){
+			mpz_set(pixel,data[in*p+jp]);
+			gmp_printf("data[%d,%d]=%Zu\n",in, jp, pixel);
 			// TO DO: get the LSB
-			mpz_congruent_p(pixel,LSB,two);
-			gmp_printf("LSB=%Zu\n",LSB);
+			//even = mpz_divisible_p(pixel,two);
+			//gmp_printf("even=%Zu\n",even);
 
 			// TO DO: embet the watermark on the LSB
 		}
 	}
-	mpz_clears(pixel, LSB, two, NULL);
+	mpz_clears(pixel, two, NULL);
 }
 
 
@@ -265,7 +266,6 @@ int main(int argc, char* argv[]) {
 	mpz_t * watermark;
 	watermark = malloc(sizeof(mpz_t) * p);
 	watermark_generation(watermark, p);
-
 	pre_watermarking(watermark, data, N, p);
 	
 	// Encryption
@@ -277,7 +277,7 @@ int main(int argc, char* argv[]) {
 	// Data extraction
 
 	// test main
-	
+
 	// clear/free
 	free(data);
 	free(watermark);
