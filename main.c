@@ -262,9 +262,9 @@ void pre_watermarking(mpz_t * watermark, mpz_t * data, int N, int p){
  * DEBUG: display data 
  *
  ****************************************************************************/
-void display_data(mpz_t *data, unsigned long int V){
+void display_array(mpz_t *array, unsigned long int V){
 	for (int i=0; i<V;i++){
-		gmp_printf("data[%d]=%Zu\n",i,data[i]);
+		gmp_printf("array[%d]=%Zu\n",i,array[i]);
 	}
 }
 
@@ -290,13 +290,16 @@ int main(int argc, char* argv[]) {
 	mpz_t * watermark;
 	watermark = malloc(sizeof(mpz_t) * p);
 	watermark_generation(watermark, p);
+
 	printf("##########\ndata:\n");
-	display_data(data, V);
+	display_array(data, V);
 	printf("##########\nwatermark:\n");
-	display_data(watermark, p);
+	display_array(watermark, p);
+
 	pre_watermarking(watermark, data, N, p);
+
 	printf("##########\ndata:\n");
-	display_data(data, V);
+	display_array(data, V);
 	
 	// Encryption
 	
