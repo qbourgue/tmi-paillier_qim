@@ -127,7 +127,7 @@ int testPaillier() {
 	mpz_mul(r, r, r2);
 	paillierEncrypt(m, r, N, c);
 	gmp_printf("\n m1+m2, r1+r2 Encrypting %Zu, %Zu gives %Zu\n", m,r, c);
-        mpz_clears(N, m, c, r, p, q, phi, o, NULL);
+    mpz_clears(N, m, c, r, p, q, phi, o, NULL);
 	mpz_clears(m2, m3, c2, c3, r2, r3, N2, NULL);
 	mpz_clear(mul_e);
         return 0;
@@ -153,7 +153,7 @@ void data_generation(mpz_t * data, unsigned long int V){
 	do {
 		mpz_urandomb(random_bytes, state, bitcnt);
 		mpz_init_set(data[i], random_bytes);
-		gmp_printf("random_bytes n°%d: %Zu\n", i, random_bytes);
+		//gmp_printf("random_bytes n°%d: %Zu\n", i, random_bytes);
 		i++;
 	}
 	while (i<V);
@@ -184,7 +184,7 @@ void watermark_generation(mpz_t *watermark, unsigned int p){
 	do {
 		mpz_urandomb(random_bit, state, bitcnt);
 		mpz_init_set(watermark[j], random_bit);
-		gmp_printf("random_bit n°%d: %Zu\n",j, random_bit);
+		//gmp_printf("random_bit n°%d: %Zu\n",j, random_bit);
 		j++;
 	}
 	while (j<p);
@@ -201,12 +201,24 @@ void pre_watermarking(mpz_t * watermark, mpz_t * data, int N, int p){
 	for (int in = 0; in<N; in++){
 		for (int jp = 0; jp<p; jp++){
 			mpz_set(pixel,data[in*p+jp]);
-			gmp_printf("data[%d,%d]=%Zu\n",in, jp, pixel);
-			// TO DO: get the LSB
-			//even = mpz_divisible_p(pixel,two);
-			//gmp_printf("even=%Zu\n",even);
 
-			// TO DO: embet the watermark on the LSB
+			// get the LSB, 0 if even is True (1), 1 else
+			even = mpz_divisible_p(pixel,two);
+
+			// embed the watermark on the LSB
+			if ((mpz_cmp_ui(watermark[jp],1) != 0)&&(even==1)){ //Wi=0 and LSB=0 -> OK, nothing to do
+			}
+			else if ((mpz_cmp_ui(watermark[jp],1) != 0)&&(even==0)){ //Wi=0 and LSB=1 -> Insert Wi instead of the LSB --> substract one
+				mpz_sub_ui(data[in*p+jp], data[in*p+jp], 1);
+			}
+			else if ((mpz_cmp_ui(watermark[jp],0) != 0)&&(even==1)){ //Wi=1 and LSB=0 -> Insert Wi instead of the LSB --> add one
+				mpz_add_ui(data[in*p+jp], data[in*p+jp], 1);
+			}
+			else if ((mpz_cmp_ui(watermark[jp],0) != 0)&&(even==0)){ //Wi=1 and LSB=1 -> OK, nothing to do
+			}
+			else{
+				printf("ERROR, THIS CASE SHOULD NOT HAPPENED !");
+			}
 		}
 	}
 	mpz_clears(pixel, two, NULL);
@@ -247,6 +259,18 @@ void pre_watermarking(mpz_t * watermark, mpz_t * data, int N, int p){
 
 /****************************************************************************
  *
+ * DEBUG: display data 
+ *
+ ****************************************************************************/
+void display_data(mpz_t *data, unsigned long int V){
+	for (int i=0; i<V;i++){
+		gmp_printf("data[%d]=%Zu\n",i,data[i]);
+	}
+}
+
+
+/****************************************************************************
+ *
  * Main 
  *
  ****************************************************************************/
@@ -266,7 +290,13 @@ int main(int argc, char* argv[]) {
 	mpz_t * watermark;
 	watermark = malloc(sizeof(mpz_t) * p);
 	watermark_generation(watermark, p);
+	printf("##########\ndata:\n");
+	display_data(data, V);
+	printf("##########\nwatermark:\n");
+	display_data(watermark, p);
 	pre_watermarking(watermark, data, N, p);
+	printf("##########\ndata:\n");
+	display_data(data, V);
 	
 	// Encryption
 	
