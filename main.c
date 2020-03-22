@@ -115,7 +115,7 @@ int testPaillier() {
 	//paillierDecrypt(c, N, m, phi);
 	//gmp_printf("Decrypting %Zu gives %Zu\n", c, m);
 	mpz_t mul_e;
-        mpz_init(mul_e);
+    mpz_init(mul_e);
 	mpz_mul(mul_e, c, c2);
 	mpz_pow_ui(N2, N, 2);
 	mpz_mod(mul_e, mul_e, N2);
@@ -130,7 +130,7 @@ int testPaillier() {
     mpz_clears(N, m, c, r, p, q, phi, o, NULL);
 	mpz_clears(m2, m3, c2, c3, r2, r3, N2, NULL);
 	mpz_clear(mul_e);
-        return 0;
+    return 0;
 }
 
 /****************************************************************************
@@ -168,7 +168,7 @@ void data_generation(mpz_t * data, unsigned long int V){
  *
  * (Create an array of p elements, which are random bits)
  *
- * LSB
+ * (Embed the watermark on the data)
  ****************************************************************************/
 
 void watermark_generation(mpz_t *watermark, unsigned int p){
@@ -231,6 +231,19 @@ void pre_watermarking(mpz_t * watermark, mpz_t * data, int N, int p){
  *
  ****************************************************************************/
 
+void paillier_init(mpz_t p1, mpz_t q1, mpz_t N1, mpz_t r, mpz_t phi){
+	gmp_randstate_t state;
+	gmp_randinit_default(state);
+	gmp_randseed_ui(state, time(NULL));
+	generatePrime(p1, SECURITY_BITS, state);
+	generatePrime(q1, SECURITY_BITS, state);
+	mpz_mul(N1, p1, q1);
+	computePhi(p1, q1, phi);
+}
+
+void data_encryption(mpz_t * data, int V, mpz_t * encrypted_data, mpz_t N1, mpz_t r){
+
+}
 
 
 /****************************************************************************
@@ -262,6 +275,7 @@ void pre_watermarking(mpz_t * watermark, mpz_t * data, int N, int p){
  * DEBUG: display data 
  *
  ****************************************************************************/
+
 void display_array(mpz_t *array, unsigned long int V){
 	for (int i=0; i<V;i++){
 		gmp_printf("array[%d]=%Zu\n",i,array[i]);
@@ -302,6 +316,24 @@ int main(int argc, char* argv[]) {
 	display_array(data, V);
 	
 	// Encryption
+	mpz_t * encrypted_data;
+	encrypted_data = malloc(sizeof(mpz_t) * V);
+
+		// Paillier parameters
+	mpz_t N1, r, p1, q1, phi, o;
+	mpz_inits(N1, r, p1, q1, phi, o, NULL);
+	printf("r: \n");
+	gmp_scanf("%Zu",r);
+	paillier_init(p1,q1,N1,r,phi);
+
+		// Paillier encryption
+	data_encryption(data, V, encrypted_data, r, N1);
+
+
+	mpz_clears(N1, r, p1, q1, phi, o, NULL);
+
+	
+	//data_encryption(data, encrypted_data);
 	
 	// Message embedding
 	
@@ -314,5 +346,6 @@ int main(int argc, char* argv[]) {
 	// clear/free
 	free(data);
 	free(watermark);
+	free(encrypted_data);
 	return 0;
 }
