@@ -202,7 +202,7 @@ void pre_watermarking(mpz_t * watermark, mpz_t * data, int N, int p){
 		for (int jp = 0; jp<p; jp++){
 			mpz_set(pixel,data[in*p+jp]);
 
-			// get the LSB, 0 if even is True (1), 1 else
+			// get the parity of the pixel, 0 if odd(LSB=1), 1 if even(LSB=0)
 			even = mpz_divisible_p(pixel,two);
 
 			// embed the watermark on the LSB
@@ -257,10 +257,27 @@ void data_encryption(mpz_t * data, unsigned long int V, mpz_t * encrypted_data, 
  *
  * Message embedding 
  *
- ****************************************************************************/
+ ****************************************************************************/dd
 
+mpz_t output, unsigned int bits, gmp_randstate_t state) {
+        do {
+                mpz_urandomb(output, state, bits);
+                mpz_nextprime(output, output);
+        }
+        while (mpz_sizeinbase(output, 2) != bits);
 
+void embed_message_to_pixel(mpz_t encrypt_pixel, mpz_t embedding, mpz_t distortion, mpz_t N, mpz_t enc_emb_pixel){ 
+        mpz_t temp_emb_pixel, r, encrypted_distortion;
+	mpz_inits(temp_emb_pixel, r, encrypted_distortion, NULL);
+        int even;
+	do {
+		mpz_urandomb(r, state, bits);
+        	paillierEncrypt(distortion, r, N, encrypted_distortion);
+		mpz_mul(enc_emb_pixel ,encrypt_pixel, encrypted_disortion);
+		even = mpz_divisible_p(pixel,two);
+	while(mpz_cmp_ui(embedding,even)==0)
 
+}
 /****************************************************************************
  *
  * Message extraction
