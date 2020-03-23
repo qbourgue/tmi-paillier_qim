@@ -257,27 +257,37 @@ void data_encryption(mpz_t * data, unsigned long int V, mpz_t * encrypted_data, 
  *
  * Message embedding 
  *
- ****************************************************************************/dd
+ ****************************************************************************/
 
-mpz_t output, unsigned int bits, gmp_randstate_t state) {
-        do {
-                mpz_urandomb(output, state, bits);
-                mpz_nextprime(output, output);
-        }
-        while (mpz_sizeinbase(output, 2) != bits);
-
-void embed_message_to_pixel(mpz_t encrypt_pixel, mpz_t embedding, mpz_t distortion, mpz_t N, mpz_t enc_emb_pixel){ 
-        mpz_t temp_emb_pixel, r, encrypted_distortion;
-	mpz_inits(temp_emb_pixel, r, encrypted_distortion, NULL);
+void embed_message_to_pixel(mpz_t enc_pixel, mpz_t embedding, mpz_t distortion, mpz_t N, gmp_randstate_t state, mpz_t enc_emb_pixel){ 
+        mpz_t r, enc_distortion;
+	mpz_inits(r, enc_distortion, NULL);
         int even;
+	unsigned int bitcnt_r = 8;
 	do {
-		mpz_urandomb(r, state, bits);
-        	paillierEncrypt(distortion, r, N, encrypted_distortion);
-		mpz_mul(enc_emb_pixel ,encrypt_pixel, encrypted_disortion);
-		even = mpz_divisible_p(pixel,two);
-	while(mpz_cmp_ui(embedding,even)==0)
-
+		mpz_urandomb(r, state, bitcnt_r);
+        	paillierEncrypt(distortion, r, N, enc_distortion);
+		mpz_mul(enc_emb_pixel ,enc_pixel, enc_distortion);
+		even = mpz_divisible_ui_p(enc_emb_pixel,2);
+	}
+	while(mpz_cmp_ui(embedding,even)!=0);
+	mpz_clears(r, enc_distortion, NULL);
+	// when embedding = 0, enc_emb_pixel should be even, so even should be 0.
+	
 }
+
+void message_embedding(mpz_t * data, unsigned long int V, mpz_t * encrypted_data, mpz_t N1, mpz_t r, mpz_t phi){
+	mpz_t encrypted_value, decrypted_value;
+	mpz_inits(encrypted_value, decrypted_value, NULL);
+	for (int i = 0; i<V; i++){
+		paillierEncrypt(data[i], r, N1, encrypted_value);
+		mpz_init_set(encrypted_data[i], encrypted_value);
+		//paillierDecrypt(encrypted_value, N1, decrypted_value, phi); 
+	}
+	mpz_clears(encrypted_value, decrypted_value, NULL);
+}
+
+
 /****************************************************************************
  *
  * Message extraction
