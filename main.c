@@ -241,16 +241,13 @@ void paillier_init(mpz_t p1, mpz_t q1, mpz_t N1, mpz_t r, mpz_t phi){
 	computePhi(p1, q1, phi);
 }
 
-void data_encryption(mpz_t * data, int V, mpz_t * encrypted_data, mpz_t N1, mpz_t r, mpz_t phi){
+void data_encryption(mpz_t * data, unsigned long int V, mpz_t * encrypted_data, mpz_t N1, mpz_t r, mpz_t phi){
 	mpz_t encrypted_value, decrypted_value;
 	mpz_inits(encrypted_value, decrypted_value, NULL);
 	for (int i = 0; i<V; i++){
-		gmp_printf("data[%d]=%Zu\n",i,data[i]);
 		paillierEncrypt(data[i], r, N1, encrypted_value);
-		gmp_printf("encrypted_value=%Zu\n",encrypted_value);
-		paillierDecrypt(encrypted_value, N1, decrypted_value, phi); //DOESN'T WORK, DUNNO WHY -- floating point exception
-		gmp_printf("decrypted_value=%Zu\n",decrypted_value);
-
+		mpz_init_set(encrypted_data[i], encrypted_value);
+		//paillierDecrypt(encrypted_value, N1, decrypted_value, phi); 
 	}
 	mpz_clears(encrypted_value, decrypted_value, NULL);
 }
@@ -274,10 +271,20 @@ void data_encryption(mpz_t * data, int V, mpz_t * encrypted_data, mpz_t N1, mpz_
 
 /****************************************************************************
  *
- * Data extraction
+ * Data decryption 
  *
  ****************************************************************************/
 
+void data_decryption(mpz_t * encrypted_data, unsigned long int V, mpz_t * decrypted_data, mpz_t N1, mpz_t phi){
+	mpz_t decrypted_value;
+	mpz_init(decrypted_value);
+	for (int i = 0; i<V; i++){
+		paillierDecrypt(encrypted_data[i], N1, decrypted_value, phi); 
+		mpz_init_set(decrypted_data[i], decrypted_value);
+	}
+	mpz_clear(decrypted_value);
+
+}
 
 
 /****************************************************************************
@@ -290,6 +297,7 @@ void display_array(mpz_t *array, unsigned long int V){
 	for (int i=0; i<V;i++){
 		gmp_printf("array[%d]=%Zu\n",i,array[i]);
 	}
+	printf("\n");
 }
 
 
@@ -305,26 +313,29 @@ int main(int argc, char* argv[]) {
 	unsigned int N = 5;
 	unsigned long int V=p*N;
 	
+
 	// Data Generation
 	mpz_t * data;
 	data = malloc(sizeof(mpz_t) * V);
 	data_generation(data, V);
+
 
 	// Pre-watermarking
 	mpz_t * watermark;
 	watermark = malloc(sizeof(mpz_t) * p);
 	watermark_generation(watermark, p);
 
-	//printf("##########\ndata:\n");
-	//display_array(data, V);
-	//printf("##########\nwatermark:\n");
-	//display_array(watermark, p);
+	printf("##########\ndata:\n");
+	display_array(data, V);
+	printf("##########\nwatermark:\n");
+	display_array(watermark, p);
 
 	pre_watermarking(watermark, data, N, p);
 
-	//printf("##########\ndata:\n");
-	//display_array(data, V);
+	printf("##########\ndata:\n");
+	display_array(data, V);
 	
+
 	// Encryption
 	mpz_t * encrypted_data;
 	encrypted_data = malloc(sizeof(mpz_t) * V);
@@ -337,23 +348,25 @@ int main(int argc, char* argv[]) {
 	paillier_init(p1,q1,N1,r,phi);
 
 		// Paillier encryption
-	data_encryption(data, V, encrypted_data, r, N1, phi);
+	data_encryption(data, V, encrypted_data, N1, r, phi);
+	printf("##########\nencrypted data:\n");
+	display_array(encrypted_data, V);
 
 
-	mpz_clears(N1, r, p1, q1, phi, o, NULL);
-
-	
-	//data_encryption(data, encrypted_data);
-	
 	// Message embedding
 	
 	// Mesage extraction
 	
-	// Data extraction
+	// Data decryption 
+	mpz_t * decrypted_data;
+	decrypted_data = malloc(sizeof(mpz_t) * V);
+	data_decryption(encrypted_data, V, decrypted_data, N1, phi);
+	printf("##########\ndecrypted data:\n");
+	display_array(decrypted_data, V);
 
-	// test main
 
 	// clear/free
+	mpz_clears(N1, r, p1, q1, phi, o, NULL);
 	free(data);
 	free(watermark);
 	free(encrypted_data);
