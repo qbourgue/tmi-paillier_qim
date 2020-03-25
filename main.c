@@ -130,6 +130,7 @@ int testPaillier() {
     mpz_clears(N, m, c, r, p, q, phi, o, NULL);
 	mpz_clears(m2, m3, c2, c3, r2, r3, N2, NULL);
 	mpz_clear(mul_e);
+	gmp_randclear(state);
     return 0;
 }
 
@@ -159,6 +160,7 @@ void data_generation(mpz_t * data, unsigned long int V){
 	while (i<V);
 
 	mpz_clears(random_bytes, NULL);
+	gmp_randclear(state);
 }
 
 
@@ -190,6 +192,7 @@ void watermark_generation(mpz_t *watermark, unsigned int p){
 	while (j<p);
 
 	mpz_clears(random_bit, NULL);
+	gmp_randclear(state);
 }
 
 void pre_watermarking(mpz_t * watermark, mpz_t * data, int N, int p){
@@ -239,6 +242,7 @@ void paillier_init(mpz_t p1, mpz_t q1, mpz_t N1, mpz_t r, mpz_t phi){
 	generatePrime(q1, SECURITY_BITS, state);
 	mpz_mul(N1, p1, q1);
 	computePhi(p1, q1, phi);
+	gmp_randclear(state);
 }
 
 void data_encryption(mpz_t * data, unsigned long int V, mpz_t * encrypted_data, mpz_t N1, mpz_t r, mpz_t phi){
@@ -292,6 +296,7 @@ void message_embedding(mpz_t * enc_data, unsigned long int V, int p, int N, mpz_
 		}
 	}
 	mpz_clears(enc_pixel, enc_emb_pixel, embedding_p, distortion_p, NULL);
+	gmp_randclear(state);
 }
 
 
@@ -388,6 +393,9 @@ int main(int argc, char* argv[]) {
 
 
 	// Message embedding
+	//mpz_t * enc_emb_data;
+	//enc_emb_data= malloc(sizeof(mpz_t) * V);
+	//message_embedding(encrypted_data, V, p, N, enc_emb_data, N1, watermark);
 	
 	// Mesage extraction
 	
