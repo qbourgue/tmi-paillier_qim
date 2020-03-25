@@ -260,20 +260,18 @@ void data_encryption(mpz_t * data, unsigned long int V, mpz_t * encrypted_data, 
  ****************************************************************************/
 
 void embed_message_to_pixel(mpz_t enc_pixel, mpz_t embedding, mpz_t distortion, mpz_t N, gmp_randstate_t state, mpz_t enc_emb_pixel){ 
-        mpz_t r, enc_distortion;
+	mpz_t r, enc_distortion;
 	mpz_inits(r, enc_distortion, NULL);
-        int even;
+	int even;
 	unsigned int bitcnt_r = 8;
 	do {
 		mpz_urandomb(r, state, bitcnt_r);
-        	paillierEncrypt(distortion, r, N, enc_distortion);
+		paillierEncrypt(distortion, r, N, enc_distortion);
 		mpz_mul(enc_emb_pixel ,enc_pixel, enc_distortion);
 		even = mpz_divisible_ui_p(enc_emb_pixel,2);
-	}
-	while(mpz_cmp_ui(embedding,even)!=0);
+	} while(mpz_cmp_ui(embedding,even)!=0);
 	mpz_clears(r, enc_distortion, NULL);
 	// when embedding = 0, enc_emb_pixel should be even, so even should be 0.
-	
 }
 
 void message_embedding(mpz_t * enc_data, unsigned long int V, int p, int N, mpz_t * enc_emb_data, mpz_t N1, mpz_t * watermark){
@@ -283,14 +281,13 @@ void message_embedding(mpz_t * enc_data, unsigned long int V, int p, int N, mpz_
 	mpz_t enc_pixel, enc_emb_pixel, embedding_p, distortion_p;
 	mpz_inits(enc_pixel, enc_emb_pixel, embedding_p, distortion_p, NULL);
 	for (int in = 0; in<N; in++){
-                for (int jp = 0; jp<p; jp++){
-                        mpz_set(enc_pixel,enc_data[in*p+jp]);
+		for (int jp = 0; jp<p; jp++){
+			mpz_set(enc_pixel,enc_data[in*p+jp]);
 			mpz_set(embedding_p, watermark[jp]);
 			// distortion = embedding * delta / 2;
 			mpz_set(distortion_p, watermark[jp]);
 			
-			embed_message_to_pixel(enc_pixel, embedding_p, distortion_p,
-				       	N1, state, enc_emb_pixel);
+			embed_message_to_pixel(enc_pixel, embedding_p, distortion_p, N1, state, enc_emb_pixel);
 			mpz_init_set(enc_emb_data[in*p+jp], enc_emb_pixel);
 		}
 	}
