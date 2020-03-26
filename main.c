@@ -278,7 +278,7 @@ void embed_message_to_pixel(mpz_t enc_pixel, mpz_t embedding, mpz_t distortion, 
 	// when embedding = 0, enc_emb_pixel should be even, so even should be 0.
 }
 
-void message_embedding(mpz_t * enc_data, unsigned long int V, int p, int N, mpz_t * enc_emb_data, mpz_t N1, mpz_t * watermark){
+void message_embedding(mpz_t * enc_data, unsigned long int V, int p, int N, mpz_t * enc_emb_data, mpz_t N1, mpz_t * message){
 	gmp_randstate_t state;
 	gmp_randinit_default(state);
 	gmp_randseed_ui(state, time(NULL));
@@ -287,9 +287,9 @@ void message_embedding(mpz_t * enc_data, unsigned long int V, int p, int N, mpz_
 	for (int in = 0; in<N; in++){
 		for (int jp = 0; jp<p; jp++){
 			mpz_set(enc_pixel,enc_data[in*p+jp]);
-			mpz_set(embedding_p, watermark[jp]);
+			mpz_set(embedding_p, message[jp]);
 			// distortion = embedding * delta / 2;
-			mpz_set(distortion_p, watermark[jp]);
+			mpz_set(distortion_p, message[jp]);
 			
 			embed_message_to_pixel(enc_pixel, embedding_p, distortion_p, N1, state, enc_emb_pixel);
 			mpz_init_set(enc_emb_data[in*p+jp], enc_emb_pixel);
@@ -393,9 +393,16 @@ int main(int argc, char* argv[]) {
 
 
 	// Message embedding
-	//mpz_t * enc_emb_data;
-	//enc_emb_data= malloc(sizeof(mpz_t) * V);
-	//message_embedding(encrypted_data, V, p, N, enc_emb_data, N1, watermark);
+	mpz_t * enc_emb_data;
+	enc_emb_data = malloc(sizeof(mpz_t) * V);
+	mpz_t * message;
+	message = malloc(sizeof(mpz_t) * p);
+	watermark_generation(message,p);
+	printf("##########\nmessage:\n");
+	display_array(message, p);
+	//message_embedding(encrypted_data, V, p, N, enc_emb_data, N1, message);
+	//printf("##########\nencrypted emb. data:\n");
+	//display_array(enc_emb_data, V);
 	
 	// Mesage extraction
 	
