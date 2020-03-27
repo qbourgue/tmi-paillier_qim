@@ -271,10 +271,10 @@ void embed_message_to_pixel(mpz_t enc_emb_pixel, mpz_t enc_pixel, mpz_t embeddin
 	unsigned int bitcnt_r = 8;
 	do {
 		mpz_urandomb(r, state, bitcnt_r);
-        	paillierEncrypt(distortion, r, N, enc_distortion);
+        paillierEncrypt(distortion, r, N, enc_distortion);
 		mpz_mul(enc_emb_pixel ,enc_pixel, enc_distortion);
 		// The multiplication of Paillet encrypted value is modulo N squared.
-	        mpz_mod(enc_emb_pixel, enc_emb_pixel, Nsquare);
+	    mpz_mod(enc_emb_pixel, enc_emb_pixel, Nsquare);
 		even = mpz_divisible_ui_p(enc_emb_pixel,2);
 	}
 	while(mpz_cmp_ui(embedding,even) == 0);
@@ -290,13 +290,12 @@ void message_embedding(mpz_t * enc_emb_data, mpz_t * enc_data, unsigned long int
 	mpz_t enc_pixel, enc_emb_pixel, embedding_p, distortion_p;
 	mpz_inits(enc_pixel, enc_emb_pixel, embedding_p, distortion_p, NULL);
 	for (int in = 0; in<N; in++){
-        	for (int jp = 0; jp<p; jp++){
-            		mpz_set(enc_pixel,enc_data[in*p+jp]);
+        for (int jp = 0; jp<p; jp++){
+            mpz_set(enc_pixel,enc_data[in*p+jp]);
 			mpz_set(embedding_p, watermark[in]);
 			// distortion = embedding * delta / 2;
 			mpz_set(distortion_p, watermark[in]);
-			embed_message_to_pixel(enc_emb_pixel, enc_pixel, embedding_p, 
-					distortion_p, N1, state);
+			embed_message_to_pixel(enc_emb_pixel, enc_pixel, embedding_p, distortion_p, N1, state);
 			mpz_init_set(enc_emb_data[in*p+jp], enc_emb_pixel);
 		}
 	}
@@ -317,20 +316,29 @@ void message_extraction_enc(mpz_t * enc_emb_data, unsigned long int V, mpz_t * e
 	mpz_inits(enc_pixel, two, NULL);
 	mpz_set_ui(two, 2);
 	unsigned int even;
-	for (int in = 0; in<N; in++){
-		for (int jp = 0; jp<p; jp++){
+	for (int in = 0; in<N; in++){ // define the message values
+		mpz_set(enc_pixel,enc_emb_data[in*p]);
+		// get the parity of the pixel, 0 if odd(LSB=1), 1 if even(LSB=0)
+		even = mpz_divisible_p(enc_pixel,two);
+
+		// if the encrypted pixel is even, the message is 0
+		if (even==1){ mpz_init_set_ui(extracted_message[in], 0); }
+
+		// if the encrypted pixel is odd, the message is 1
+		else { mpz_init_set_ui(extracted_message[in], 1); }
+
+		for (int jp = 1; jp<p; jp++){ // redundancy, check for each subset that the message value defined is correct
 			mpz_set(enc_pixel,enc_emb_data[in*p+jp]);
-
-			// get the parity of the pixel, 0 if odd(LSB=1), 1 if even(LSB=0)
 			even = mpz_divisible_p(enc_pixel,two);
-
-			// if the encrypted pixel is even, the message is 0
-			if (even==1){
-				mpz_init_set_ui(extracted_message[jp], 0);
+			if ((even==1) && (mpz_cmp_ui(extracted_message[in],0) == 0)){
+				// redundancy: the message value i_n corresponds
 			}
 			// if the encrypted pixel is odd, the message is 1
+			else if ((even==0) && (mpz_cmp_ui(extracted_message[in],1) == 0)) {
+				// redundancy: the message value i_n corresponds
+			}
 			else {
-				mpz_init_set_ui(extracted_message[jp], 1);
+				printf("PROBLEM !\n");
 			}
 		}
 	}
@@ -376,16 +384,16 @@ void message_extraction_spa(mpz_t * decrypted_data, unsigned long int V, mpz_t *
 			// if the pixel in the spa. domain is the same than the one in the prewatermark -> the message is 0
 			// get the parity of the pixel, 0 if odd(LSB=1), 1 if even(LSB=0)
 			if ((mpz_cmp_ui(watermark[jp],1) == 0)&&(even==1)){ //Wi=1 and LSB=0 -> the message is 1 
-				mpz_init_set_ui(extracted_message[jp], 1);
+				mpz_init_set_ui(extracted_message[in], 1);
 			}
 			else if ((mpz_cmp_ui(watermark[jp],1) == 0)&&(even==0)){ //Wi=1 and LSB=1 -> the message is 0 
-				mpz_init_set_ui(extracted_message[jp], 0);
+				mpz_init_set_ui(extracted_message[in], 0);
 			}
 			else if ((mpz_cmp_ui(watermark[jp],0) == 0)&&(even==1)){ //Wi=0 and LSB=0 -> the message is 0
-				mpz_init_set_ui(extracted_message[jp], 0);
+				mpz_init_set_ui(extracted_message[in], 0);
 			}
 			else if ((mpz_cmp_ui(watermark[jp],0) == 0)&&(even==0)){ //Wi=0 and LSB=1 -> the message is 1 
-				mpz_init_set_ui(extracted_message[jp], 1);
+				mpz_init_set_ui(extracted_message[in], 1);
 			}
 			else{
 				printf("ERROR, THIS CASE SHOULD NOT HAPPENED !");
@@ -477,10 +485,10 @@ int main(int argc, char* argv[]) {
 
 	// Mesage extraction from encrypted domain
 	mpz_t * extracted_message;
-	extracted_message = malloc(sizeof(mpz_t) * p);
+	extracted_message = malloc(sizeof(mpz_t) * N);
 	message_extraction_enc(enc_emb_data, V, extracted_message, p, N);
 	printf("##########\nExtracted message from encrypted domain:\n");
-	display_array(extracted_message, p);
+	display_array(extracted_message, N);
 	
 
 	// Data decryption 
@@ -495,7 +503,7 @@ int main(int argc, char* argv[]) {
 	// Mesage extraction from spatial domain
 	message_extraction_spa(decrypted_data, V, extracted_message, watermark, p, N);
 	printf("##########\nExtracted message from spatial domain:\n");
-	display_array(extracted_message, p);
+	display_array(extracted_message, N);
 	
 
 	// clear/free
