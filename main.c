@@ -72,6 +72,8 @@ void paillierEncrypt(mpz_t m, mpz_t r, mpz_t N, mpz_t c){
 	mpz_clears(plus1, Nsquare, rn, nm, NULL);
 }
 
+// Baptiste and Vincent Decrypt
+/*
 void paillierDecrypt(mpz_t c, mpz_t N, mpz_t m, mpz_t phi){
 	mpz_t rInvert, product, Nsquare, r, rminus, minusN, temp, minusOne;
 	mpz_inits(rInvert, product, Nsquare, r, rminus, minusN, temp, minusOne, NULL);
@@ -87,7 +89,37 @@ void paillierDecrypt(mpz_t c, mpz_t N, mpz_t m, mpz_t phi){
 	mpz_div(m, product, N);
 	mpz_clears(rInvert, product, Nsquare, r, rminus, minusN, temp, minusOne, NULL);
 }
+*/
 
+void paillierDecrypt(mpz_t cipher, mpz_t N, mpz_t output, mpz_t phi){
+	mpz_t Nsquare, mu, dividende;
+	mpz_inits(Nsquare, mu, dividende, NULL);
+	mpz_pow_ui(Nsquare, N, 2);
+	mpz_powm(dividende, cipher, phi, Nsquare);
+	mpz_sub_ui(dividende, dividende, 1);
+	mpz_div(output, dividende, N);
+	// mu is the inv of phi modulo N
+	mpz_invert(mu, phi, N);
+	mpz_mul(output, output, mu);
+	mpz_mod(output, output, N);
+	mpz_clears(Nsquare, mu, dividende, NULL);
+}
+/*
+void paillierDecrypt(mpz_t cipher, mpz_t N, mpz_t output, mpz_t phi){
+	mpz_t Nsquare, dividende;
+	mpz_inits(Nsquare, dividende, NULL);
+	mpz_pow_ui(Nsquare, N, 2);
+	mpz_powm(dividende, cipher, phi, Nsquare);
+	mpz_sub_ui(dividende, dividende, 1);
+	
+	
+	// (N exp phi mod N**2 - 1) / N
+	
+	mpz_div(output, dividende, N);
+	mpz_mod(output, output, N);
+	mpz_clears(Nsquare, dividende, NULL);
+}
+*/
 int testPaillier() {
 	gmp_randstate_t state;
 	gmp_randinit_default(state);
@@ -111,27 +143,29 @@ int testPaillier() {
 	paillierEncrypt(m, r, N, c);
 	gmp_printf("\nEncrypting %Zu gives %Zu\n", m, c);
 	paillierEncrypt(m2, r2, N, c2);
-	gmp_printf("\nEncrypting %Zu gives %Zu\n", m, c);
-	//paillierDecrypt(c, N, m, phi);
-	//gmp_printf("Decrypting %Zu gives %Zu\n", c, m);
+	gmp_printf("\nEncrypting %Zu gives %Zu\n", m2, c2);
+	//paillierDecrypt(c2, N, m2, phi);
+	//gmp_printf("Decrypting c2 %Zu  __ gives __ %Zu\n", c2, m2);
 	mpz_t mul_e;
-    mpz_init(mul_e);
+        mpz_init(mul_e);
 	mpz_mul(mul_e, c, c2);
 	mpz_pow_ui(N2, N, 2);
 	mpz_mod(mul_e, mul_e, N2);
-	gmp_printf("\nMUL c et c2: %Zu", mul_e);
+	gmp_printf("\nMUL c et c2: %Zu \n", mul_e);
 	paillierDecrypt(mul_e, N, o, phi);
-	gmp_printf("Decrypting %Zu gives %Zu\n", mul_e, o);
+	gmp_printf("Decrypting %Zu __ gives __ %Zu\n", mul_e, o);
 	
 	mpz_add(m, m, m2);
 	mpz_mul(r, r, r2);
 	paillierEncrypt(m, r, N, c);
-	gmp_printf("\n m1+m2, r1+r2 Encrypting %Zu, %Zu gives %Zu\n", m,r, c);
-    mpz_clears(N, m, c, r, p, q, phi, o, NULL);
+	gmp_printf("\n Encrypting from m1+m2 %Zu, and r1+r2 %Zu gives %Zu\n", m,r, c);
+	paillierDecrypt(c, N, m, phi);
+	gmp_printf("Decrypting %Zu gives %Zu\n", c, m);
+        mpz_clears(N, m, c, r, p, q, phi, o, NULL);
 	mpz_clears(m2, m3, c2, c3, r2, r3, N2, NULL);
 	mpz_clear(mul_e);
 	gmp_randclear(state);
-    return 0;
+    	return 0;
 }
 
 /****************************************************************************
@@ -358,7 +392,7 @@ void data_decryption(mpz_t * encrypted_data, unsigned long int V, mpz_t * decryp
 	mpz_set_ui(modulo, 256);
 	for (int i = 0; i<V; i++){
 		paillierDecrypt(encrypted_data[i], N1, decrypted_value, phi); 
-		mpz_mod(decrypted_value,decrypted_value,modulo);
+		//mpz_mod(decrypted_value,decrypted_value,modulo);
 		mpz_init_set(decrypted_data[i], decrypted_value);
 	}
 	mpz_clears(decrypted_value, modulo, NULL);
@@ -448,8 +482,8 @@ void display_array(mpz_t *array, unsigned long int V){
 
 int main(int argc, char* argv[]) {
 	// Init parameters
-	unsigned int p = 2;
-	unsigned int N = 5;
+	unsigned int p = 20;
+	unsigned int N = 40;
 	unsigned long int V=p*N;
 	
 
@@ -479,7 +513,7 @@ int main(int argc, char* argv[]) {
 	mpz_t * encrypted_data;
 	encrypted_data = malloc(sizeof(mpz_t) * V);
 
-		// Paillier parameters
+	// Paillier parameters
 	mpz_t N1, r, p1, q1, phi, o;
 	mpz_inits(N1, r, p1, q1, phi, o, NULL);
 	printf("r: ");
@@ -488,8 +522,8 @@ int main(int argc, char* argv[]) {
 
 		// Paillier encryption
 	data_encryption(data, V, encrypted_data, N1, r, phi);
-	printf("##########\nEncrypted data:\n");
-	display_array(encrypted_data, V);
+	//printf("##########\nEncrypted data:\n");
+	//display_array(encrypted_data, V);
 
 
 	// Message embedding
@@ -501,8 +535,8 @@ int main(int argc, char* argv[]) {
 	printf("##########\nMessage:\n");
 	display_array(message, N);
 	message_embedding(enc_emb_data, encrypted_data, V, p, N, N1, message);
-	printf("##########\nEncrypted emb. data:\n");
-	display_array(enc_emb_data, V);
+	//printf("##########\nEncrypted emb. data:\n");
+	//display_array(enc_emb_data, V);
 	
 
 	// Mesage extraction from encrypted domain
