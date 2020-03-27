@@ -353,13 +353,15 @@ void message_extraction_enc(mpz_t * enc_emb_data, unsigned long int V, mpz_t * e
  ****************************************************************************/
 
 void data_decryption(mpz_t * encrypted_data, unsigned long int V, mpz_t * decrypted_data, mpz_t N1, mpz_t phi){
-	mpz_t decrypted_value;
-	mpz_init(decrypted_value);
+	mpz_t decrypted_value, modulo;
+	mpz_inits(decrypted_value, modulo, NULL);
+	mpz_set_ui(modulo, 256);
 	for (int i = 0; i<V; i++){
 		paillierDecrypt(encrypted_data[i], N1, decrypted_value, phi); 
+		mpz_mod(decrypted_value,decrypted_value,modulo);
 		mpz_init_set(decrypted_data[i], decrypted_value);
 	}
-	mpz_clear(decrypted_value);
+	mpz_clears(decrypted_value, modulo, NULL);
 
 }
 
