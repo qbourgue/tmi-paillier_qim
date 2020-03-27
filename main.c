@@ -271,10 +271,10 @@ void embed_message_to_pixel(mpz_t enc_emb_pixel, mpz_t enc_pixel, mpz_t embeddin
 	unsigned int bitcnt_r = 8;
 	do {
 		mpz_urandomb(r, state, bitcnt_r);
-        paillierEncrypt(distortion, r, N, enc_distortion);
+        	paillierEncrypt(distortion, r, N, enc_distortion);
 		mpz_mul(enc_emb_pixel ,enc_pixel, enc_distortion);
 		// The multiplication of Paillet encrypted value is modulo N squared.
-	    mpz_mod(enc_emb_pixel, enc_emb_pixel, Nsquare);
+	        mpz_mod(enc_emb_pixel, enc_emb_pixel, Nsquare);
 		even = mpz_divisible_ui_p(enc_emb_pixel,2);
 	}
 	while(mpz_cmp_ui(embedding,even) == 0);
@@ -290,12 +290,11 @@ void message_embedding(mpz_t * enc_emb_data, mpz_t * enc_data, unsigned long int
 	mpz_t enc_pixel, enc_emb_pixel, embedding_p, distortion_p;
 	mpz_inits(enc_pixel, enc_emb_pixel, embedding_p, distortion_p, NULL);
 	for (int in = 0; in<N; in++){
-        for (int jp = 0; jp<p; jp++){
-            mpz_set(enc_pixel,enc_data[in*p+jp]);
-			mpz_set(embedding_p, watermark[jp]);
+        	for (int jp = 0; jp<p; jp++){
+            		mpz_set(enc_pixel,enc_data[in*p+jp]);
+			mpz_set(embedding_p, watermark[in]);
 			// distortion = embedding * delta / 2;
-			mpz_set(distortion_p, watermark[jp]);
-
+			mpz_set(distortion_p, watermark[in]);
 			embed_message_to_pixel(enc_emb_pixel, enc_pixel, embedding_p, 
 					distortion_p, N1, state);
 			mpz_init_set(enc_emb_data[in*p+jp], enc_emb_pixel);
@@ -435,14 +434,14 @@ int main(int argc, char* argv[]) {
 	watermark = malloc(sizeof(mpz_t) * p);
 	watermark_generation(watermark, p);
 
-	printf("##########\ndata:\n");
+	printf("##########\nOriginal data:\n");
 	display_array(data, V);
-	printf("##########\nwatermark:\n");
+	printf("##########\nWatermark:\n");
 	display_array(watermark, p);
 
 	pre_watermarking(watermark, data, N, p);
 
-	printf("##########\ndata:\n");
+	printf("##########\nPrewatermarked data:\n");
 	display_array(data, V);
 	
 
@@ -459,7 +458,7 @@ int main(int argc, char* argv[]) {
 
 		// Paillier encryption
 	data_encryption(data, V, encrypted_data, N1, r, phi);
-	printf("##########\nencrypted data:\n");
+	printf("##########\nEncrypted data:\n");
 	display_array(encrypted_data, V);
 
 
@@ -467,12 +466,12 @@ int main(int argc, char* argv[]) {
 	mpz_t * enc_emb_data;
 	enc_emb_data = malloc(sizeof(mpz_t) * V);
 	mpz_t * message;
-	message = malloc(sizeof(mpz_t) * p);
-	watermark_generation(message,p);
-	printf("##########\nmessage:\n");
-	display_array(message, p);
+	message = malloc(sizeof(mpz_t) * N);
+	watermark_generation(message, N);
+	printf("##########\nMessage:\n");
+	display_array(message, N);
 	message_embedding(enc_emb_data, encrypted_data, V, p, N, N1, message);
-	printf("##########\nencrypted emb. data:\n");
+	printf("##########\nEncrypted emb. data:\n");
 	display_array(enc_emb_data, V);
 	
 
@@ -480,7 +479,7 @@ int main(int argc, char* argv[]) {
 	mpz_t * extracted_message;
 	extracted_message = malloc(sizeof(mpz_t) * p);
 	message_extraction_enc(enc_emb_data, V, extracted_message, p, N);
-	printf("##########\nextracted message:\n");
+	printf("##########\nExtracted message from encrypted domain:\n");
 	display_array(extracted_message, p);
 	
 
@@ -489,13 +488,13 @@ int main(int argc, char* argv[]) {
 	decrypted_data = malloc(sizeof(mpz_t) * V);
 	//data_decryption(encrypted_data, V, decrypted_data, N1, phi);
 	data_decryption(enc_emb_data, V, decrypted_data, N1, phi);
-	printf("##########\ndecrypted data:\n");
+	printf("##########\nDecrypted data:\n");
 	display_array(decrypted_data, V);
 
 
 	// Mesage extraction from spatial domain
 	message_extraction_spa(decrypted_data, V, extracted_message, watermark, p, N);
-	printf("##########\nextracted message:\n");
+	printf("##########\nExtracted message from spatial domain:\n");
 	display_array(extracted_message, p);
 	
 
