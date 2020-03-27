@@ -377,7 +377,27 @@ void message_extraction_spa(mpz_t * decrypted_data, unsigned long int V, mpz_t *
 	mpz_set_ui(two,2);
 	unsigned int even;
 	for (int in = 0; in<N; in++){
-		for (int jp = 0; jp<p; jp++){
+		mpz_set(spa_pixel,decrypted_data[in*p]);
+		even = mpz_divisible_p(spa_pixel, two);
+
+		// if the pixel in the spa. domain is the same than the one in the prewatermark -> the message is 0
+		// get the parity of the pixel, 0 if odd(LSB=1), 1 if even(LSB=0)
+		if ((mpz_cmp_ui(watermark[0],1) == 0)&&(even==1)){ //Wi=1 and LSB=0 -> the message is 1 
+			mpz_init_set_ui(extracted_message[in], 1);
+		}
+		else if ((mpz_cmp_ui(watermark[0],1) == 0)&&(even==0)){ //Wi=1 and LSB=1 -> the message is 0 
+			mpz_init_set_ui(extracted_message[in], 0);
+		}
+		else if ((mpz_cmp_ui(watermark[0],0) == 0)&&(even==1)){ //Wi=0 and LSB=0 -> the message is 0
+			mpz_init_set_ui(extracted_message[in], 0);
+		}
+		else if ((mpz_cmp_ui(watermark[0],0) == 0)&&(even==0)){ //Wi=0 and LSB=1 -> the message is 1 
+			mpz_init_set_ui(extracted_message[in], 1);
+		}
+		else{
+			printf("ERROR, THIS CASE SHOULD NOT HAPPENED !");
+		}
+		for (int jp = 1; jp<p; jp++){
 			mpz_set(spa_pixel,decrypted_data[in*p+jp]);
 			even = mpz_divisible_p(spa_pixel, two);
 
@@ -511,5 +531,7 @@ int main(int argc, char* argv[]) {
 	free(data);
 	free(watermark);
 	free(encrypted_data);
+	free(message);
+	free(extracted_message);
 	return 0;
 }
