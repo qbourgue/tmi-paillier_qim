@@ -302,13 +302,16 @@ void embed_message_to_pixel(mpz_t enc_emb_pixel, mpz_t enc_pixel, mpz_t embeddin
 	mpz_inits(r, enc_distortion, Nsquare, NULL);
 	mpz_pow_ui(Nsquare, N, 2);
 	int even;
-	unsigned int bitcnt_r = 8;
 	do {
-		mpz_urandomb(r, state, bitcnt_r);
-        paillierEncrypt(distortion, r, N, enc_distortion);
+		//Pick random r : 0<r<N
+		do{
+			mpz_urandomm(r, state, N);
+		}
+		while (mpz_cmp_ui(r,0)==0);
+        	paillierEncrypt(distortion, r, N, enc_distortion);
 		mpz_mul(enc_emb_pixel ,enc_pixel, enc_distortion);
 		// The multiplication of Paillet encrypted value is modulo N squared.
-	    mpz_mod(enc_emb_pixel, enc_emb_pixel, Nsquare);
+	    	mpz_mod(enc_emb_pixel, enc_emb_pixel, Nsquare);
 		even = mpz_divisible_ui_p(enc_emb_pixel,2);
 	}
 	while(mpz_cmp_ui(embedding,even) == 0);
@@ -392,7 +395,10 @@ void data_decryption(mpz_t * encrypted_data, unsigned long int V, mpz_t * decryp
 	mpz_set_ui(modulo, 256);
 	for (int i = 0; i<V; i++){
 		paillierDecrypt(encrypted_data[i], N1, decrypted_value, phi); 
-		//mpz_mod(decrypted_value,decrypted_value,modulo);
+		// If pixel decrypted is out of bound, reduce by two its value
+		if (mpz_cmp_ui(decrypted_value, 256) == 0) {
+			mpz_set_ui(decrypted_value, 254);
+		}
 		mpz_init_set(decrypted_data[i], decrypted_value);
 	}
 	mpz_clears(decrypted_value, modulo, NULL);
