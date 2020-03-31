@@ -348,7 +348,6 @@ void message_embedding(mpz_t * enc_emb_data, mpz_t * enc_data, unsigned long int
  ****************************************************************************/
 
 void message_extraction_enc(mpz_t * enc_emb_data, unsigned long int V, mpz_t * extracted_message, unsigned int p, unsigned int N){
-	// TO DO: redundancy -> check for each subset that the message is the same
 	mpz_t enc_pixel, two;
 	mpz_inits(enc_pixel, two, NULL);
 	mpz_set_ui(two, 2);
@@ -413,7 +412,6 @@ void data_decryption(mpz_t * encrypted_data, unsigned long int V, mpz_t * decryp
  ****************************************************************************/
 
 void message_extraction_spa(mpz_t * decrypted_data, unsigned long int V, mpz_t * extracted_message, mpz_t * watermark, unsigned int p, unsigned int N){
-	// TO DO: redundancy -> check for each subset that the message is the same
 	mpz_t spa_pixel, two;
 	mpz_inits(spa_pixel, two, NULL);
 	mpz_set_ui(two,2);
